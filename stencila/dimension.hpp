@@ -389,6 +389,18 @@ public:
 		// Note that this is intended to use `Size` instead of `Size-1` since the is returning `end` not `last`.
 		return Level<Derived>(Size,"index");
 	}
+
+	/**
+	 * Select a level from a position along the range of levels
+	 * 
+	 * Usually used for randomly selecting a level by passing a random number
+	 * 
+	 * @param position Number between 0 an 1
+	 */
+	Level<Derived> select(const double& position) const {
+		unsigned int index = int(position * Size);
+		return Level<Derived>(index, "index");
+	}
 };
 
 /**
