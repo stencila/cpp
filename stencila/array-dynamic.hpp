@@ -2,6 +2,7 @@
 
 #include <array>
 #include <fstream>
+#include <random>
 #include <set>
 
 #include <stencila/array-declaration.hpp>
@@ -251,9 +252,53 @@ public:
 	 * @}
 	 */
 	
+	void read(std::istream& stream, void(*function)(std::istream&, Type&)){
+		// Read in the header
+		// Currently this is not checked for consistency with the array dimension names
+		std::string header;
+		std::getline(stream,header);
+		// Get each line....
+		std::string line;
+		while(std::getline(stream,line)){
+			// Check for lines that are all whitespace and skip them
+			// (this primarily is to prevent errors caused by extra empty lines at end of files)
+			if(std::all_of(line.begin(),line.end(),isspace)) continue;
+			// Put line into a string stream for reading by the function
+			std::stringstream line_stream(line);
+			Type value;
+			function(line_stream, value);
+			values_.push_back(value);
+		}
+	}
+
+	void read(const std::string& path, void(*function)(std::istream&, Type&)) {
+		std::ifstream file(path);
+		read(file, function);
+		file.close();
+	}
+
+	
 	void write(const std::string& path) const {
 		std::ofstream file(path);
 		write_(file,IsStructure<Type>());
+	}
+
+	void write(const std::string& path, void(*function)(std::ostream&, const Type&), const std::vector<std::string>& header = {}) const {
+		std::ofstream file(path);
+		if (header.size()) {
+			for (auto name : header) file << name << "\t";
+			file << "\n";
+		}
+		for (const auto& value : values_){
+			function(file, value);
+			file << "\n";
+		}
+	}
+
+	Type random(void) {
+		static std::default_random_engine generator;
+		static std::uniform_real_distribution<double> distribution(0.0,1.0);
+		return values_[int(distribution(generator)*size())];
 	}
 
 private:
