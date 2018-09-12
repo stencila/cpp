@@ -122,26 +122,32 @@ private:
 
 	template<typename Data>
 	void data_(Data& data, const std::string& name, const std::true_type& is_structure, const std::false_type& is_array){
-		// Data is a structure so create another node and recurse into it with another JsonWriter
-		boost::property_tree::ptree& child = tree_->put_child(name,boost::property_tree::ptree());
-		JsonWriter(&child,path_,name).mirror(data);
+		// Data is a `Structure` so create another node in tree and recurse into it with another `JsonWriter`
+		boost::property_tree::ptree& child = tree_->put_child(name, boost::property_tree::ptree());
+		JsonWriter(&child, path_, name).mirror(data);
 	}
 
 	template<typename Data>
 	void data_(Data& data, const std::string& name, const std::false_type& is_structure, const std::true_type& is_array){
-		// Data is an array. Write to a file an insert a link into JSON
+		// Data is a `Array` so create another node in tree and recurse into each items
+		#if 1
+		boost::property_tree::ptree& child = tree_->put_child(name, boost::property_tree::ptree());
+		JsonWriter(&child, path_, name).mirror(data);
+		#else
+		// Write to a file an insert a link into JSON
 		boost::filesystem::path dir = boost::join(path_,"/");
 		boost::filesystem::create_directories(dir);
 		boost::filesystem::path file = dir / (name + ".tsv");
 		std::string filename = file.string();
 		data.write(filename);
 		tree_->put(name,"@file:"+filename);
+		#endif
 	}
 
 	template<typename Data>
 	void data_(Data& data, const std::string& name, const std::false_type& is_structure, const std::false_type& is_array){
 		// Data is not a reflector, so attempt to convert it to `Data` type
-		tree_->put<Data>(name,data);
+		tree_->put<Data>(name, data);
 	}
 
 	boost::property_tree::ptree* tree_;
